@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -124,6 +125,7 @@ func NewAgent(ctx context.Context,
 		if err != nil {
 			return agent, err
 		}
+		prometheus.MustRegister(metrics.NewNodeResourceCollector(nodeName, nodeInformer.Lister(), nodeResourceManager.GetResource))
 		managers = appendManagerIfNotNil(managers, nodeResourceManager)
 	}
 
@@ -133,6 +135,8 @@ func NewAgent(ctx context.Context,
 	}
 
 	agent.managers = managers
+
+	prometheus.MustRegister(metrics.NewPodResourceCollector(podInformer.Lister()))
 
 	return agent, nil
 }
