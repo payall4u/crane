@@ -2,10 +2,10 @@ package metrics
 
 import (
 	"github.com/gocrane/crane/pkg/known"
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/labels"
 	v1 "k8s.io/client-go/listers/core/v1"
+	k8smetrics "k8s.io/component-base/metrics"
 	"k8s.io/klog/v2"
 )
 
@@ -15,15 +15,19 @@ const (
 )
 
 var (
-	podElasticCPUDesc = prometheus.NewDesc("crane_pod_elastic_cpu_request",
+	podElasticCPUDesc = k8smetrics.NewDesc("crane_pod_elastic_cpu_request",
 		"The elastic cpu requested by pod",
 		[]string{"pod", "namespace"},
 		nil,
+		k8smetrics.ALPHA,
+		"",
 	)
-	podElasticMemoryDesc = prometheus.NewDesc("crane_pod_elastic_memory_request",
+	podElasticMemoryDesc = k8smetrics.NewDesc("crane_pod_elastic_memory_request",
 		"The elastic cpu requested by pod",
 		[]string{"pod", "namespace"},
 		nil,
+		k8smetrics.ALPHA,
+		"",
 	)
 )
 
@@ -34,15 +38,16 @@ func NewPodResourceCollector(podLister v1.PodLister) *PodResourceCollector {
 }
 
 type PodResourceCollector struct {
+	k8smetrics.BaseStableCollector
 	podLister v1.PodLister
 }
 
-func (n *PodResourceCollector) Describe(descs chan<- *prometheus.Desc) {
+func (n *PodResourceCollector) DescribeWithStability(descs chan<- *k8smetrics.Desc) {
 	descs <- podElasticCPUDesc
 	descs <- podElasticMemoryDesc
 }
 
-func (n *PodResourceCollector) Collect(metrics chan<- prometheus.Metric) {
+func (n *PodResourceCollector) CollectWithStability(metrics chan<- k8smetrics.Metric) {
 	pods, err := n.podLister.List(labels.Everything())
 	if err != nil {
 		klog.ErrorS(err, "list pods failed")
@@ -58,69 +63,100 @@ func (n *PodResourceCollector) Collect(metrics chan<- prometheus.Metric) {
 		if eCPU.IsZero() && eMemory.IsZero() {
 			continue
 		}
-		metrics <- prometheus.MustNewConstMetric(podElasticCPUDesc, prometheus.GaugeValue, eCPU.AsApproximateFloat64(), pod.Name, pod.Namespace)
-		metrics <- prometheus.MustNewConstMetric(podElasticMemoryDesc, prometheus.GaugeValue, eMemory.AsApproximateFloat64(), pod.Name, pod.Namespace)
+		metrics <- k8smetrics.NewLazyConstMetric(podElasticCPUDesc, k8smetrics.GaugeValue, eCPU.AsApproximateFloat64(), pod.Name, pod.Namespace)
+		metrics <- k8smetrics.NewLazyConstMetric(podElasticMemoryDesc, k8smetrics.GaugeValue, eMemory.AsApproximateFloat64(), pod.Name, pod.Namespace)
 	}
 }
 
 var (
-	nodeElasticCPUDesc = prometheus.NewDesc("crane_node_elastic_cpu_allocatable",
+	nodeElasticCPUDesc = k8smetrics.NewDesc("crane_node_elastic_cpu_allocatable",
 		"The elastic cpu of the node.",
 		[]string{"node"},
 		nil,
+		k8smetrics.ALPHA,
+		"",
 	)
-	nodeElasticMemoryDesc = prometheus.NewDesc("crane_node_elastic_memory_allocatable",
+	nodeElasticMemoryDesc = k8smetrics.NewDesc("crane_node_elastic_memory_allocatable",
 		"The elastic memory requested by pod",
 		[]string{"node"},
 		nil,
+		k8smetrics.ALPHA,
+		"",
 	)
-	nodeCPUAllocatableDesc = prometheus.NewDesc("crane_node_cpu_allocatable",
+	nodeCPUAllocatableDesc = k8smetrics.NewDesc("crane_node_cpu_allocatable",
 		"The cpu allocatable of the node.",
 		[]string{"node"},
 		nil,
+		k8smetrics.ALPHA,
+		"",
 	)
-	nodeCPUCapacityDesc = prometheus.NewDesc("crane_node_cpu_capacity",
+	nodeCPUCapacityDesc = k8smetrics.NewDesc("crane_node_cpu_capacity",
 		"The cpu capacity of the node.",
 		[]string{"node"},
 		nil,
+		k8smetrics.ALPHA,
+		"",
 	)
-	nodeMemoryAllocatableDesc = prometheus.NewDesc("crane_node_memory_allocatable",
+	nodeMemoryAllocatableDesc = k8smetrics.NewDesc("crane_node_memory_allocatable",
 		"The memory allocatable requested by pod",
 		[]string{"node"},
 		nil,
+		k8smetrics.ALPHA,
+		"",
 	)
-	nodeMemoryCapacityDesc = prometheus.NewDesc("crane_node_memory_capacity",
+	nodeMemoryCapacityDesc = k8smetrics.NewDesc("crane_node_memory_capacity",
 		"The memory capacity requested by pod",
 		[]string{"node"},
 		nil,
+		k8smetrics.ALPHA,
+		"",
 	)
-	nodeCPUReservedDesc = prometheus.NewDesc("crane_node_cpu_reserved",
+	nodeCPUReservedDesc = k8smetrics.NewDesc("crane_node_cpu_reserved",
 		"The reserved cpu of node",
 		[]string{"node"},
-		nil)
-	nodeCPUUsageOnlineDesc = prometheus.NewDesc("crane_node_cpu_usage_online",
+		nil,
+		k8smetrics.ALPHA,
+		"",
+	)
+	nodeCPUUsageOnlineDesc = k8smetrics.NewDesc("crane_node_cpu_usage_online",
 		"The online cpu usage of node",
 		[]string{"node"},
-		nil)
-	nodeCPUUsageOfflineDesc = prometheus.NewDesc("crane_node_cpu_usage_offline",
+		nil,
+		k8smetrics.ALPHA,
+		"",
+	)
+	nodeCPUUsageOfflineDesc = k8smetrics.NewDesc("crane_node_cpu_usage_offline",
 		"The offline cpu usage of node",
 		[]string{"node"},
-		nil)
-	nodeMemoryReservedDesc = prometheus.NewDesc("crane_node_memory_reserved",
+		nil,
+		k8smetrics.ALPHA,
+		"",
+	)
+	nodeMemoryReservedDesc = k8smetrics.NewDesc("crane_node_memory_reserved",
 		"The reserved memory of node",
 		[]string{"node"},
-		nil)
-	nodeMemoryUsageOnlineDesc = prometheus.NewDesc("crane_node_memory_usage_online",
+		nil,
+		k8smetrics.ALPHA,
+		"",
+	)
+	nodeMemoryUsageOnlineDesc = k8smetrics.NewDesc("crane_node_memory_usage_online",
 		"The online memory usage of node",
 		[]string{"node"},
-		nil)
-	nodeMemoryUsageOfflineDesc = prometheus.NewDesc("crane_node_memory_usage_offline",
+		nil,
+		k8smetrics.ALPHA,
+		"",
+	)
+	nodeMemoryUsageOfflineDesc = k8smetrics.NewDesc("crane_node_memory_usage_offline",
 		"The offline memory usage of node",
 		[]string{"node"},
-		nil)
+		nil,
+		k8smetrics.ALPHA,
+		"",
+	)
 )
 
 type NodeResourceCollector struct {
+	k8smetrics.BaseStableCollector
 	nodeName           string
 	nodeLister         v1.NodeLister
 	nodeResourceGetter func() *known.ResourceStatus
@@ -134,7 +170,7 @@ func NewNodeResourceCollector(nodeName string, nodeLister v1.NodeLister, nodeRes
 	}
 }
 
-func (n *NodeResourceCollector) Describe(descs chan<- *prometheus.Desc) {
+func (n *NodeResourceCollector) DescribeWithStability(descs chan<- *k8smetrics.Desc) {
 	// resource metrics from status of node
 	descs <- nodeElasticCPUDesc
 	descs <- nodeElasticMemoryDesc
@@ -152,31 +188,30 @@ func (n *NodeResourceCollector) Describe(descs chan<- *prometheus.Desc) {
 	descs <- nodeMemoryUsageOfflineDesc
 }
 
-func (n *NodeResourceCollector) Collect(metrics chan<- prometheus.Metric) {
+func (n *NodeResourceCollector) CollectWithStability(metrics chan<- k8smetrics.Metric) {
 	node, err := n.nodeLister.Get(n.nodeName)
 	if err != nil {
 		klog.ErrorS(err, "list pods failed")
 		return
 	}
-	metrics <- prometheus.MustNewConstMetric(nodeElasticCPUDesc, prometheus.GaugeValue, node.Status.Allocatable.Name(known.ElasticCPU, resource.DecimalSI).AsApproximateFloat64(), node.Name)
-	metrics <- prometheus.MustNewConstMetric(nodeElasticMemoryDesc, prometheus.GaugeValue, node.Status.Allocatable.Name(known.ElasticMemory, resource.BinarySI).AsApproximateFloat64(), node.Name)
-	metrics <- prometheus.MustNewConstMetric(nodeCPUAllocatableDesc, prometheus.GaugeValue, node.Status.Allocatable.Cpu().AsApproximateFloat64(), node.Name)
-	metrics <- prometheus.MustNewConstMetric(nodeMemoryAllocatableDesc, prometheus.GaugeValue, node.Status.Allocatable.Memory().AsApproximateFloat64(), node.Name)
-	metrics <- prometheus.MustNewConstMetric(nodeCPUCapacityDesc, prometheus.GaugeValue, node.Status.Capacity.Cpu().AsApproximateFloat64(), node.Name)
-	metrics <- prometheus.MustNewConstMetric(nodeMemoryCapacityDesc, prometheus.GaugeValue, node.Status.Capacity.Memory().AsApproximateFloat64(), node.Name)
+	metrics <- k8smetrics.NewLazyConstMetric(nodeElasticCPUDesc, k8smetrics.GaugeValue, node.Status.Allocatable.Name(known.ElasticCPU, resource.DecimalSI).AsApproximateFloat64(), node.Name)
+	metrics <- k8smetrics.NewLazyConstMetric(nodeElasticMemoryDesc, k8smetrics.GaugeValue, node.Status.Allocatable.Name(known.ElasticMemory, resource.BinarySI).AsApproximateFloat64(), node.Name)
+	metrics <- k8smetrics.NewLazyConstMetric(nodeCPUAllocatableDesc, k8smetrics.GaugeValue, node.Status.Allocatable.Cpu().AsApproximateFloat64(), node.Name)
+	metrics <- k8smetrics.NewLazyConstMetric(nodeMemoryAllocatableDesc, k8smetrics.GaugeValue, node.Status.Allocatable.Memory().AsApproximateFloat64(), node.Name)
+	metrics <- k8smetrics.NewLazyConstMetric(nodeCPUCapacityDesc, k8smetrics.GaugeValue, node.Status.Capacity.Cpu().AsApproximateFloat64(), node.Name)
+	metrics <- k8smetrics.NewLazyConstMetric(nodeMemoryCapacityDesc, k8smetrics.GaugeValue, node.Status.Capacity.Memory().AsApproximateFloat64(), node.Name)
 
 	resourceStatus := n.nodeResourceGetter()
 	if resourceStatus == nil {
 		return
 	}
-	metrics <- prometheus.MustNewConstMetric(nodeCPUReservedDesc, prometheus.GaugeValue, resourceStatus.CPUReserved.AsApproximateFloat64(), node.Name)
+	metrics <- k8smetrics.NewLazyConstMetric(nodeCPUReservedDesc, k8smetrics.GaugeValue, resourceStatus.CPUReserved.AsApproximateFloat64(), node.Name)
 	// TODO incorrect online define !!
-	metrics <- prometheus.MustNewConstMetric(nodeCPUUsageOnlineDesc, prometheus.GaugeValue, resourceStatus.CPUUsage.AsApproximateFloat64(), node.Name)
-	metrics <- prometheus.MustNewConstMetric(nodeCPUUsageOfflineDesc, prometheus.GaugeValue, resourceStatus.CPUUsageOffline.AsApproximateFloat64(), node.Name)
+	metrics <- k8smetrics.NewLazyConstMetric(nodeCPUUsageOnlineDesc, k8smetrics.GaugeValue, resourceStatus.CPUUsage.AsApproximateFloat64(), node.Name)
+	metrics <- k8smetrics.NewLazyConstMetric(nodeCPUUsageOfflineDesc, k8smetrics.GaugeValue, resourceStatus.CPUUsageOffline.AsApproximateFloat64(), node.Name)
 
-	metrics <- prometheus.MustNewConstMetric(nodeMemoryReservedDesc, prometheus.GaugeValue, resourceStatus.MemoryReserved.AsApproximateFloat64(), node.Name)
+	metrics <- k8smetrics.NewLazyConstMetric(nodeMemoryReservedDesc, k8smetrics.GaugeValue, resourceStatus.MemoryReserved.AsApproximateFloat64(), node.Name)
 	// TODO incorrect online define !!
-	metrics <- prometheus.MustNewConstMetric(nodeMemoryUsageOnlineDesc, prometheus.GaugeValue, resourceStatus.MemoryUsage.AsApproximateFloat64(), node.Name)
-	metrics <- prometheus.MustNewConstMetric(nodeMemoryUsageOfflineDesc, prometheus.GaugeValue, resourceStatus.MemoryUsageOffline.AsApproximateFloat64(), node.Name)
-
+	metrics <- k8smetrics.NewLazyConstMetric(nodeMemoryUsageOnlineDesc, k8smetrics.GaugeValue, resourceStatus.MemoryUsage.AsApproximateFloat64(), node.Name)
+	metrics <- k8smetrics.NewLazyConstMetric(nodeMemoryUsageOfflineDesc, k8smetrics.GaugeValue, resourceStatus.MemoryUsageOffline.AsApproximateFloat64(), node.Name)
 }

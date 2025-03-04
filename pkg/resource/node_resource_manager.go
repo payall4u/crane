@@ -230,9 +230,10 @@ func (o *NodeResourceManager) updateResource() error {
 	node := origin.DeepCopy()
 	updateIfNeed := func(name v1.ResourceName, next resource.Quantity) {
 		if existed := node.Status.Capacity[name]; math.Abs(existed.AsApproximateFloat64()-next.AsApproximateFloat64()) >= MinDeltaRatio*existed.AsApproximateFloat64() {
-			node.Status.Capacity[known.ElasticCPU] = next
-			node.Status.Allocatable[known.ElasticCPU] = next
-			messages = append(messages, fmt.Sprintf("resource %s: %s -> %s", name.String(), existed.String(), next.String()))
+			round := *resource.NewQuantity(next.Value(), next.Format)
+			node.Status.Capacity[known.ElasticCPU] = round
+			node.Status.Allocatable[known.ElasticCPU] = round
+			messages = append(messages, fmt.Sprintf("resource %s: %s -> %s (before round: %s)", name.String(), existed.String(), round.String(), next.String()))
 		}
 	}
 
