@@ -153,7 +153,7 @@ func (o *NodeResourceManager) computeResourceStatus(tsm map[string][]common.Time
 	if val, err := transform(types.MetricNameExtResContainerCpuTotalUsage); err != nil {
 		return err
 	} else {
-		rs.CPUUsageOffline = resource.NewMilliQuantity(val, resource.DecimalSI)
+		rs.CPUUsageOffline = resource.NewQuantity(val, resource.DecimalSI)
 	}
 	if val, err := transform(types.MetricNameExclusiveCPUIdle); err != nil {
 		return err
