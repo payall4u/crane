@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"github.com/gocrane/crane/pkg/known"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/labels"
 	v1 "k8s.io/client-go/listers/core/v1"
@@ -55,10 +56,13 @@ func (n *PodResourceCollector) CollectWithStability(metrics chan<- k8smetrics.Me
 	}
 
 	for _, pod := range pods {
+		if pod.Status.Phase != corev1.PodRunning {
+			continue
+		}
 		eCPU, eMemory := resource.NewQuantity(0, resource.DecimalSI), resource.NewQuantity(0, resource.BinarySI)
 		for _, container := range pod.Spec.Containers {
 			eCPU.Add(*container.Resources.Requests.Name(known.ElasticCPU, resource.DecimalSI))
-			eMemory.Add(*container.Resources.Requests.Name(known.ElasticCPU, resource.DecimalSI))
+			eMemory.Add(*container.Resources.Requests.Name(known.ElasticMemory, resource.DecimalSI))
 		}
 		if eCPU.IsZero() && eMemory.IsZero() {
 			continue

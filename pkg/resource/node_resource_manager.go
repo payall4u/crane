@@ -231,8 +231,8 @@ func (o *NodeResourceManager) updateResource() error {
 	updateIfNeed := func(name v1.ResourceName, next resource.Quantity) {
 		if existed := node.Status.Capacity[name]; math.Abs(existed.AsApproximateFloat64()-next.AsApproximateFloat64()) >= MinDeltaRatio*existed.AsApproximateFloat64() {
 			round := *resource.NewQuantity(next.Value(), next.Format)
-			node.Status.Capacity[known.ElasticCPU] = round
-			node.Status.Allocatable[known.ElasticCPU] = round
+			node.Status.Capacity[name] = round
+			node.Status.Allocatable[name] = round
 			messages = append(messages, fmt.Sprintf("resource %s: %s -> %s (before round: %s)", name.String(), existed.String(), round.String(), next.String()))
 		}
 	}
