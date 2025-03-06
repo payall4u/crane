@@ -243,7 +243,7 @@ func (o *NodeResourceManager) updateResource() error {
 	if onlineCPU.Cmp(*o.resourceStatus.CPUReservedTSP) == -1 {
 		onlineCPU = o.resourceStatus.CPUReservedTSP.DeepCopy()
 	}
-	onlineCPU.Sub(*o.resourceStatus.CPUReserved)
+	onlineCPU.Add(*o.resourceStatus.CPUReserved)
 	// TODO should use allocatable CPU ???
 	elasticCPU := node.Status.Allocatable.Cpu().DeepCopy()
 	elasticCPU.Sub(onlineCPU)
@@ -254,7 +254,7 @@ func (o *NodeResourceManager) updateResource() error {
 	if onlineMemory.Cmp(*o.resourceStatus.MemoryReservedTSP) == -1 {
 		onlineMemory = o.resourceStatus.MemoryReservedTSP.DeepCopy()
 	}
-	onlineMemory.Sub(*o.resourceStatus.MemoryReserved)
+	onlineMemory.Add(*o.resourceStatus.MemoryReserved)
 	// TODO should use allocatable memory?
 	elasticMemory := node.Status.Allocatable.Memory().DeepCopy()
 	elasticMemory.Sub(onlineMemory)
